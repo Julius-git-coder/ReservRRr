@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { studentSignup } from "../Service/firebaseService";
+import { useNavigate } from "react-router-dom";
 
 export default function StudentSignup() {
   const [form, setForm] = useState({ name: "", email: "", password: "", teamId: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(null);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -12,15 +14,17 @@ export default function StudentSignup() {
     try {
       const res = await studentSignup(form);
       setSuccess("Signup successful! You are part of team: " + res.teamId);
+      // redirect to student dashboard (user will be signed in after createUser)
+      navigate("/dashboard");
     } catch (err) {
       setError(err.message || "Signup failed.");
     }
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-md mx-auto">
       <h2 className="text-xl font-bold mb-4">Student Signup</h2>
-      <form onSubmit={handleSubmit} className="space-y-3 max-w-md">
+      <form onSubmit={handleSubmit} className="space-y-3">
         <input required placeholder="Name" value={form.name} onChange={(e)=>setForm({...form,name:e.target.value})} className="w-full p-2 rounded bg-gray-800 text-white" />
         <input required placeholder="Email" type="email" value={form.email} onChange={(e)=>setForm({...form,email:e.target.value})} className="w-full p-2 rounded bg-gray-800 text-white" />
         <input required placeholder="Password" type="password" value={form.password} onChange={(e)=>setForm({...form,password:e.target.value})} className="w-full p-2 rounded bg-gray-800 text-white" />

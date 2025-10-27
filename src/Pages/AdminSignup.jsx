@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { adminSignupSecure } from "../Service/firebaseService";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminSignup() {
   const [form, setForm] = useState({ name: "", email: "", password: "", teamId: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,6 +16,8 @@ export default function AdminSignup() {
     try {
       const res = await adminSignupSecure(form);
       setSuccess(`Admin created. Team ID: ${res.teamId}`);
+      // user is signed in after createUserWithEmailAndPassword -> redirect to admin dashboard
+      navigate("/admin-dashboard");
     } catch (err) {
       setError(err.message || "Signup failed.");
     } finally {
@@ -22,9 +26,9 @@ export default function AdminSignup() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-md mx-auto">
       <h2 className="text-xl font-bold mb-4">Admin Signup</h2>
-      <form onSubmit={handleSubmit} className="space-y-3 max-w-md">
+      <form onSubmit={handleSubmit} className="space-y-3">
         <input required placeholder="Name" value={form.name} onChange={(e)=>setForm({...form,name:e.target.value})} className="w-full p-2 rounded bg-gray-800 text-white" />
         <input required placeholder="Email" type="email" value={form.email} onChange={(e)=>setForm({...form,email:e.target.value})} className="w-full p-2 rounded bg-gray-800 text-white" />
         <input required placeholder="Password" type="password" value={form.password} onChange={(e)=>setForm({...form,password:e.target.value})} className="w-full p-2 rounded bg-gray-800 text-white" />
