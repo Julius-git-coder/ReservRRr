@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /admins/{adminId} {
+      allow create: if request.auth != null && request.auth.uid == adminId && request.resource.data.teamId is string;
+      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.adminId == adminId;
+      allow update, delete: if request.auth != null && request.auth.uid == adminId;
+    }
+
+    match /students/{studentId} {
+      allow create: if request.auth != null && request.auth.uid == studentId;
+      allow read: if request.auth != null && (
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.adminId == resource.data.adminId)
+        || request.auth.uid == studentId);
+      allow update: if request.auth != null && request.auth.uid == studentId;
+      allow delete: if request.auth != null && request.auth.uid == studentId;
+    }
+
+    match /messages/{messageId} {
+      allow create: if request.auth != null &&
+        request.resource.data.senderId == request.auth.uid &&
+        request.resource.data.teamId is string &&
+        request.resource.data.senderRole in ['admin', 'student'] &&
+        (request.resource.data.recipientId == null || request.resource.data.recipientId is string);
+      allow read: if request.auth != null && (
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId == resource.data.teamId)
+        ||
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student' &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId == resource.data.teamId &&
+         (
+           resource.data.recipientId == null ||
+           resource.data.recipientId == request.auth.uid ||
+           resource.data.senderId == request.auth.uid
+         )
+        )
+      );
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
